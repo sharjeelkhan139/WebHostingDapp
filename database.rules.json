@@ -1,0 +1,10 @@
+{
+  "rules": {
+    ".read": true,
+    ".write": false,
+    "websites": {
+      ".read": true,
+      ".write": true
+    }
+  }
+}

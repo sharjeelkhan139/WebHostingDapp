@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Decentralized Web Hosting</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #cfb08e;
+            margin: 0;
+            padding: 0;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+
+        form {
+            max-width: 400px;
+            margin: 20px auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        label {
+            display: block;
+            margin-bottom: 6px;
+            color: #666;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 12px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        button[type="submit"] {
+            width: 100%;
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            padding: 10px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        button[type="submit"]:hover {
+            background-color: #0056b3;
+        }
+
+        #result {
+            text-align: center;
+            margin-top: 20px;
+            color: #007bff;
+        }
+    </style>
+
+    <!-- Include Web3.js library -->
+    <script src="https://cdn.jsdelivr.net/npm/web3@1.5.3/dist/web3.min.js"></script>
+
+    <!-- Include Firebase JavaScript SDK using script tags -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.4/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.4/firebase-database-compat.js"></script>
+</head>
+<body>
+    <h1>Decentralized Web Hosting</h1>
+    
+    <form id="registerForm">
+        <label for="domain">Domain Name:</label>
+        <input type="text" id="domain" name="domain">
+        <label for="contentAddress">Content Address:</label>
+        <input type="text" id="contentAddress" name="contentAddress">
+        <label for="webtype">webtype:</label>
+        <input type="text" id="webtype" name="webtype">
+        <button type="submit">Register Website</button>
+    </form>
+
+    <div id="result"></div>
+
+    <script>
+        // Initialize Web3.js with the provider
+        const web3 = new Web3(Web3.givenProvider || 'HTTP://127.0.0.1:7545'); // Update with your Ethereum node URL
+
+        // Contract address
+        const contractAddress = '0x67D9D9576728A4B19a1684145456406ACf623BEB'; // Update with your deployed contract address
+
+        // Contract ABI
+        const contractABI = [
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": true,
+                "internalType": "address",
+                "name": "owner",
+                "type": "address"
+            },
+            {
+                "indexed": false,
+                "internalType": "string",
+                "name": "domain",
+                "type": "string"
+            },
+            {
+                "indexed": false,
+                "internalType": "string",
+                "name": "contentAddress",
+                "type": "string"
+            },
+            {
+                "indexed": false,
+                "internalType": "string",
+                "name": "webtype",
+                "type": "string"
+            }
+        ],
+        "name": "WebsiteRegistered",
+        "type": "event"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "string",
+                "name": "domain",
+                "type": "string"
+            },
+            {
+                "internalType": "string",
+                "name": "contentAddress",
+                "type": "string"
+            },
+            {
+                "internalType": "string",
+                "name": "webtype",
+                "type": "string"
+            }
+        ],
+        "name": "registerWebsite",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "string",
+                "name": "domain",
+                "type": "string"
+            },
+            {
+                "internalType": "string",
+                "name": "newContentAddress",
+                "type": "string"
+            },
+            {
+                "internalType": "string",
+                "name": "newWebtype",
+                "type": "string"
+            }
+        ],
+        "name": "updateContentAddress",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "string",
+                "name": "domain",
+                "type": "string"
+            }
+        ],
+        "name": "getContentAddress",
+        "outputs": [
+            {
+                "internalType": "string",
+                "name": "",
+                "type": "string"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function",
+        "constant": true
+    }
+];
+
+
+        // Initialize contract instance
+        const contract = new web3.eth.Contract(contractABI, contractAddress);
+
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyDKYocD-A93ZfIteIi8Vl93aNP7FLHSJ0U",
+            authDomain: "dweb-host.firebaseapp.com",
+            databaseURL: "https://dweb-host-default-rtdb.firebaseio.com",
+            projectId: "dweb-host",
+            storageBucket: "dweb-host.appspot.com",
+            messagingSenderId: "852511093830",
+            appId: "1:852511093830:web:17c27ddd278d230e68c647"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+
+        // Initialize Realtime Database
+        const database = firebase.database();
+
+        // Function to handle form submission
+        async function registerWebsite(event) {
+            event.preventDefault();
+
+            const domain = document.getElementById('domain').value;
+            const contentAddress = document.getElementById('contentAddress').value;
+            const webtype = document.getElementById('webtype').value;
+
+            try {
+                // Send transaction to register the website
+                const accounts = await web3.eth.getAccounts();
+                await contract.methods.registerWebsite(domain, contentAddress, webtype).send({ from: accounts[0] });
+
+                // Register website in Firebase Realtime Database
+                await database.ref('websites').push({
+                    domain: domain,
+                    contentAddress: contentAddress,
+                    webtype: webtype
+                });
+
+                // Display success message
+                document.getElementById('result').innerHTML = 'Website registered successfully!';
+            } catch (error) {
+                // Display error message
+                document.getElementById('result').innerHTML = 'Error: ' + error.message;
+            }
+        }
+
+        // Attach form submission event listener
+        document.getElementById('registerForm').addEventListener('submit', registerWebsite);
+
+        
+    </script>
+</body>
+</html>
